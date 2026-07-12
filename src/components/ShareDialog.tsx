@@ -50,7 +50,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose }) => {
       PaperProps={{ sx: { bgcolor: '#111', border: '1px solid rgba(255,255,255,0.1)' } }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <Typography variant="h6" sx={{ fontSize: 16, fontWeight: 600 }}>Share Grid</Typography>
+        <Typography component="span" variant="h6" sx={{ fontSize: 16, fontWeight: 600 }}>Share Grid</Typography>
         <IconButton size="small" onClick={onClose} sx={{ color: 'rgba(255,255,255,0.4)' }}>
           <Close sx={{ fontSize: 18 }} />
         </IconButton>
