@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react'
 import { Box, Typography, IconButton, Button, Tooltip, Select, MenuItem } from '@mui/material'
-import { Add, Share, DeleteSweep, Link as LinkIcon, LinkOff, Refresh } from '@mui/icons-material'
+import { Add, Share, DeleteSweep, Link as LinkIcon, LinkOff, Refresh, GridView } from '@mui/icons-material'
 import { useStreamStore } from '../store/useStreamStore'
 import { StreamGrid } from './StreamGrid'
 import { AddStreamDialog } from './AddStreamDialog'
@@ -15,6 +15,7 @@ export const Layout: React.FC = () => {
   const [isConnectionDialogOpen, setIsConnectionDialogOpen] = useState(false)
   const streams = useStreamStore((s) => s.streams)
   const clearAll = useStreamStore((s) => s.clearAll)
+  const autoArrange = useStreamStore((s) => s.autoArrange)
   const desktopConnected = useDesktopConnectionStore((s) => s.connected)
   const desktopBaseUrl = useDesktopConnectionStore((s) => s.baseUrl)
   const desktopGrids = useDesktopGridStore((s) => s.desktopGrids)
@@ -38,6 +39,11 @@ export const Layout: React.FC = () => {
       clearAll()
     }
   }, [streams.length, clearAll])
+  const handleAutoArrange = useCallback(() => {
+    if (streams.length > 0 && window.confirm(`Auto-arrange all ${streams.length} stream${streams.length === 1 ? '' : 's'}?`)) {
+      autoArrange()
+    }
+  }, [streams.length, autoArrange])
   const handleRefreshDesktop = useCallback(() => {
     void refreshDesktopState().catch(() => undefined)
   }, [refreshDesktopState])
@@ -164,6 +170,18 @@ export const Layout: React.FC = () => {
 
           {!desktopConnected && streams.length > 0 && (
             <>
+              <Tooltip title="Auto-arrange tiles">
+                <IconButton
+                  size="small"
+                  onClick={handleAutoArrange}
+                  sx={{
+                    color: 'rgba(255,255,255,0.5)',
+                    '&:hover': { color: '#00ff88', bgcolor: 'rgba(0,255,136,0.08)' }
+                  }}
+                >
+                  <GridView sx={{ fontSize: 20 }} />
+                </IconButton>
+              </Tooltip>
               <Tooltip title="Share Grid">
                 <IconButton
                   size="small"

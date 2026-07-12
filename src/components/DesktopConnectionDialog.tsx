@@ -10,6 +10,7 @@ import {
   TextField,
   Typography
 } from '@mui/material'
+import { Download } from '@mui/icons-material'
 import { useDesktopConnectionStore } from '../store/useDesktopConnectionStore'
 import { useDesktopGridStore } from '../store/useDesktopGridStore'
 
@@ -68,6 +69,18 @@ export const DesktopConnectionDialog: React.FC<DesktopConnectionDialogProps> = (
             Use this web app as a companion controller for a running MultiViewGrid desktop instance.
             Enter the desktop app API URL and API key, then test the connection.
           </Typography>
+
+          <Button
+            component="a"
+            href="https://github.com/KJ5IRQ/MultiviewGrid"
+            target="_blank"
+            rel="noreferrer"
+            variant="outlined"
+            startIcon={<Download />}
+            sx={{ alignSelf: 'flex-start' }}
+          >
+            Get MultiViewGrid Desktop on GitHub
+          </Button>
 
           <TextField
             autoFocus
