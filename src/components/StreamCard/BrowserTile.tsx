@@ -1,6 +1,7 @@
-import { memo, useCallback, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useRef, useState } from 'react'
 import { Box, IconButton, TextField, Tooltip, Typography } from '@mui/material'
 import { Home, Refresh } from '@mui/icons-material'
+import { normalizeBrowserUrl } from '../../utils/browser'
 
 interface BrowserTileProps {
   url: string
@@ -13,10 +14,16 @@ interface BrowserTileProps {
  * Note: Many sites block iframe embedding via X-Frame-Options.
  */
 export const BrowserTile = memo(({ url, onLoad, onError }: BrowserTileProps): JSX.Element => {
-  const [address, setAddress] = useState(url)
+  const homeUrl = normalizeBrowserUrl(url)
+  const [address, setAddress] = useState(homeUrl)
   const [error, setError] = useState<string | null>(null)
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [key, setKey] = useState(0)
+
+  useEffect(() => {
+    setAddress(homeUrl)
+    setKey((value) => value + 1)
+  }, [homeUrl])
 
   const navigate = useCallback((targetUrl: string): void => {
     const clean = targetUrl.trim()
@@ -83,7 +90,7 @@ export const BrowserTile = memo(({ url, onLoad, onError }: BrowserTileProps): JS
           </IconButton>
         </Tooltip>
         <Tooltip title="Home">
-          <IconButton size="small" onClick={() => navigate(url)}>
+          <IconButton size="small" onClick={() => navigate(homeUrl)}>
             <Home fontSize="small" />
           </IconButton>
         </Tooltip>

@@ -1,76 +1,73 @@
 # MultiviewGrid Web
 
-MultiviewGrid Web is the browser companion for the desktop MultiviewGrid app. The
-current web app can also run in a limited standalone mode, but the preferred
-architecture is **companion mode**: keep desktop-only media features in the
-Electron app and use this web UI as a remote control surface.
+MultiviewGrid Web is the standalone browser edition of
+[MultiviewGrid Desktop](https://github.com/KJ5IRQ/MultiviewGrid). Its primary job
+is to reproduce the desktop app's video-wall workflow as closely as browser
+capabilities allow: named grids, direct stream playback, drag/resize controls,
+layout presets, persistence, and shareable links.
 
-## Why companion mode?
+Connecting to a running desktop app is an optional secondary mode. It is useful
+for viewing desktop grids and reaching sources that browsers cannot handle, but
+the web application must remain fully useful without that connection.
 
-A normal browser cannot fully replace the desktop app for features such as RTSP
-transcoding, local filesystem playback, capture tiles, or unrestricted embedded
-browser views. Those capabilities should stay in the desktop application, while
-this project provides a mobile- and browser-friendly way to configure and monitor
-it.
+## Features
 
-## Current features
+- Named local grids with create, switch, rename, duplicate, import, export, and delete workflows.
+- Direct playback for YouTube, Twitch, Rumble, X/Twitter, Facebook, TikTok,
+  Instagram, Vimeo, Kick, Dailymotion, HLS, DASH, and browser-compatible URLs.
+- Resizable and draggable tiles with mute, fit/fill, fullscreen, edit, and remove controls.
+- Global mute, automatic arrangement, two-column, and three-column layouts.
+- Multiple-URL paste, browser-local persistence, and URL-hash sharing.
+- Optional authenticated connection to the MultiviewGrid Desktop REST API.
 
-- React + TypeScript + Vite web UI.
-- Dark MultiviewGrid-style stream grid.
-- Add, remove, resize, and persist stream tiles locally.
-- Share local layouts through URL hashes.
-- First companion-mode connection settings dialog for a running desktop API.
-- Desktop API connection testing with optional `X-API-Key` authentication.
+## Browser and desktop capability boundary
 
-## Companion connection
+The web edition directly supports sources that browsers can safely play or
+embed. The connection dialog is not required for normal web use.
 
-Use the **Desktop** button in the toolbar to configure the running desktop app's
-API URL and API key. The web app tries common health/status endpoints and stores
-connection settings in local browser storage.
+These capabilities remain desktop-only and are clearly identified in the web UI:
 
-Default URL:
+- RTSP/RTSPS transcoding
+- NDI and AceStream
+- native window, screen, and application capture
+- unrestricted local-file access
+- recording and broadcasting
+
+Many arbitrary websites also prohibit iframe embedding through CSP or
+`X-Frame-Options`; that restriction is imposed by the source website.
+
+## Optional desktop connection
+
+Enable the API server in MultiviewGrid Desktop, then use **More → Connect
+Desktop** in the web toolbar. The default desktop API URL is:
 
 ```text
-http://localhost:8765
+http://localhost:3737
 ```
 
-When using a phone or another computer on the same LAN, replace `localhost` with
-the desktop machine's LAN IP address.
-
-## Standalone web limitations
-
-Standalone browser mode is intentionally limited. In a browser-only deployment:
-
-- RTSP/RTSPS sources need a desktop app or server to transcode them to browser-playable HLS/DASH.
-- `file://` paths from another machine cannot be opened by the website.
-- Many arbitrary websites block iframe embedding with security headers.
-- Capture tiles require explicit browser permissions and are not equivalent to native capture.
+Use the desktop machine's LAN IP instead of `localhost` when connecting from
+another device. API settings are stored in local browser storage.
 
 ## Development
-
-Install dependencies and start the dev server:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Build for production:
+Production build and lint:
 
 ```bash
 npm run build
-```
-
-Run the linter:
-
-```bash
 npm run lint
 ```
 
-## Near-term roadmap
+The production site is deployed at
+[multiviewgrid-web.vercel.app](https://multiviewgrid-web.vercel.app).
 
-1. Add a typed desktop API client for grids and streams.
-2. Sync grids from the running desktop app.
-3. Send remote commands for add, update, remove, mute, and auto-arrange.
-4. Add connection health/status indicators.
-5. Keep standalone mode focused on browser-compatible sources only.
+## Product direction
+
+1. Keep standalone browser parity with the desktop workflow as the first priority.
+2. Port browser-safe desktop controls and dialogs instead of replacing them with a remote dashboard.
+3. Keep desktop-only capabilities explicit and provide a clear route to the desktop application.
+4. Maintain remote desktop control as an optional advanced feature.

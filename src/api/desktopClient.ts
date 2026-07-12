@@ -104,12 +104,22 @@ export class DesktopClient {
   }
 
   private async request<T>(endpoint: string, init: RequestInit = {}): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+    const hostname = new URL(this.baseUrl).hostname
+    const targetAddressSpace = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]'
+      ? 'loopback'
+      : /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(hostname)
+        ? 'local'
+        : undefined
+    const networkAwareInit = {
       ...init,
+      ...(targetAddressSpace ? { targetAddressSpace } : {})
+    } as RequestInit
+    const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      ...networkAwareInit,
       headers: {
         Accept: 'application/json',
         ...(this.apiKey ? { 'X-API-Key': this.apiKey } : {}),
-        ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(networkAwareInit.body ? { 'Content-Type': 'application/json' } : {}),
         ...init.headers
       }
     })

@@ -125,7 +125,7 @@ export const DesktopConnectionDialog: React.FC<DesktopConnectionDialogProps> = (
           onClick={handleSaveAndTest}
           variant="contained"
           disabled={testing || !baseUrl.trim()}
-          sx={{ bgcolor: '#00ff88', color: '#000', fontWeight: 600, '&:hover': { bgcolor: '#00dd77' } }}
+          sx={{ bgcolor: '#3FB950', color: '#06120A', fontWeight: 600, '&:hover': { bgcolor: '#56D364' } }}
         >
           {testing ? 'Testing…' : 'Save & Test'}
         </Button>

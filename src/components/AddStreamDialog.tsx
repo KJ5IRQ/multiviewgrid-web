@@ -10,6 +10,7 @@ import {
   Box,
   Typography
 } from '@mui/material'
+import { Alert, Link } from '@mui/material'
 import { v4 as uuidv4 } from 'uuid'
 import type { DashboardStream, DashboardSourceType } from '../types/dashboard'
 import { useStreamStore } from '../store/useStreamStore'
@@ -60,6 +61,8 @@ export const AddStreamDialog: React.FC<AddStreamDialogProps> = ({
   const [url, setUrl] = useState('')
   const [detectedType, setDetectedType] = useState<DashboardSourceType | null>(null)
   const [name, setName] = useState('')
+  const urls = url.split(/\n+/).map((value) => value.trim()).filter(Boolean)
+  const desktopOnly = urls.some((value) => /^(rtsp|rtsps|ndi|acestream|file):/i.test(value))
 
   // Clear state when dialog opens
   useEffect(() => {
@@ -76,41 +79,41 @@ export const AddStreamDialog: React.FC<AddStreamDialogProps> = ({
       setDetectedType(null)
       return
     }
-    const type = detectSourceType(url)
+    const type = detectSourceType(url.split(/\n+/).find((value) => value.trim()) ?? url)
     setDetectedType(type)
   }, [url])
 
   const handleAdd = useCallback(() => {
-    const trimmedUrl = url.trim()
-    if (!trimmedUrl) return
+    if (!urls.length || desktopOnly) return
 
-    const detected = detectSourceType(trimmedUrl)
-    const finalName = name.trim() || detected.toUpperCase()
-
-    const newStream: DashboardStream = {
-      id: uuidv4(),
-      name: finalName,
-      streamUrl: trimmedUrl,
-      sourceType: detected,
-      playback: detected === 'hls' || detected === 'dash' ? 'native' : 'iframe',
-      muted: true,
-      x: 0,
-      y: 0,
-      w: 12,
-      h: 9
+    for (const [index, streamUrl] of urls.entries()) {
+      const detected = detectSourceType(streamUrl)
+      const baseName = name.trim() || detected.toUpperCase()
+      const newStream: DashboardStream = {
+        id: uuidv4(),
+        name: urls.length > 1 ? `${baseName} ${index + 1}` : baseName,
+        streamUrl,
+        sourceType: detected,
+        playback: detected === 'hls' || detected === 'dash' ? 'native' : 'iframe',
+        muted: true,
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 9,
+        fitMode: 'contain'
+      }
+      addStream(newStream)
     }
-
-    addStream(newStream)
     onClose()
-  }, [url, name, addStream, onClose])
+  }, [urls, desktopOnly, name, addStream, onClose])
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' && detectedType && url.trim()) {
+      if (e.key === 'Enter' && detectedType && url.trim() && !desktopOnly) {
         handleAdd()
       }
     },
-    [detectedType, url, handleAdd]
+    [detectedType, url, desktopOnly, handleAdd]
   )
 
   const typeLabel = useMemo(() => {
@@ -150,13 +153,16 @@ export const AddStreamDialog: React.FC<AddStreamDialogProps> = ({
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={handleKeyDown}
             fullWidth
+            multiline
+            minRows={2}
             variant="outlined"
+            helperText="Paste one URL, or multiple URLs on separate lines."
             sx={{
               '& .MuiOutlinedInput-root': {
                 color: '#fff',
                 '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
                 '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
-                '&.Mui-focused fieldset': { borderColor: '#00ff88' }
+                '&.Mui-focused fieldset': { borderColor: '#3FB950' }
               },
               '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.5)' }
             }}
@@ -164,9 +170,15 @@ export const AddStreamDialog: React.FC<AddStreamDialogProps> = ({
           {detectedType && (
             <Box>
               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                Detected: <span style={{ color: '#00ff88', fontWeight: 600 }}>{typeLabel}</span>
+                Detected: <span style={{ color: '#3FB950', fontWeight: 600 }}>{typeLabel}</span>
               </Typography>
             </Box>
+          )}
+          {desktopOnly && (
+            <Alert severity="info">
+              RTSP, NDI, AceStream, capture, and local-file sources require the desktop app.{' '}
+              <Link href="https://github.com/KJ5IRQ/MultiviewGrid" target="_blank" rel="noreferrer">Get MultiViewGrid Desktop</Link>
+            </Alert>
           )}
           <TextField
             label="Name (optional)"
@@ -179,7 +191,7 @@ export const AddStreamDialog: React.FC<AddStreamDialogProps> = ({
                 color: '#fff',
                 '& fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
                 '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.3)' },
-                '&.Mui-focused fieldset': { borderColor: '#00ff88' }
+                '&.Mui-focused fieldset': { borderColor: '#3FB950' }
               },
               '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.5)' }
             }}
@@ -193,16 +205,16 @@ export const AddStreamDialog: React.FC<AddStreamDialogProps> = ({
         <Button
           onClick={handleAdd}
           variant="contained"
-          disabled={!detectedType || !url.trim()}
+          disabled={!detectedType || !url.trim() || desktopOnly}
           sx={{
-            bgcolor: '#00ff88',
-            color: '#000',
+            bgcolor: '#3FB950',
+            color: '#06120A',
             fontWeight: 600,
-            '&:hover': { bgcolor: '#00dd77' },
+            '&:hover': { bgcolor: '#56D364' },
             '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }
           }}
         >
-          Add Stream
+          {urls.length > 1 ? `Add ${urls.length} Streams` : 'Add Stream'}
         </Button>
       </DialogActions>
     </Dialog>

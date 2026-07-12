@@ -50,7 +50,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose }) => {
       PaperProps={{ sx: { bgcolor: '#111', border: '1px solid rgba(255,255,255,0.1)' } }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#fff', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <Typography variant="h6" sx={{ fontSize: 16, fontWeight: 600 }}>Share Grid</Typography>
+        <Typography component="span" variant="h6" sx={{ fontSize: 16, fontWeight: 600 }}>Share Grid</Typography>
         <IconButton size="small" onClick={onClose} sx={{ color: 'rgba(255,255,255,0.4)' }}>
           <Close sx={{ fontSize: 18 }} />
         </IconButton>
@@ -70,7 +70,7 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose }) => {
             InputProps={{
               readOnly: true,
               sx: {
-                color: '#00ff88',
+                color: '#56D364',
                 fontSize: 12,
                 fontFamily: 'monospace',
                 '& fieldset': { borderColor: 'rgba(255,255,255,0.15)' }
@@ -88,10 +88,10 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({ open, onClose }) => {
           variant="contained"
           startIcon={copied ? <Check /> : <ContentCopy />}
           sx={{
-            bgcolor: copied ? '#00dd77' : '#00ff88',
-            color: '#000',
+            bgcolor: copied ? '#2EA043' : '#3FB950',
+            color: '#06120A',
             fontWeight: 600,
-            '&:hover': { bgcolor: copied ? '#00cc66' : '#00dd77' },
+            '&:hover': { bgcolor: copied ? '#3FB950' : '#56D364' },
             '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }
           }}
         >

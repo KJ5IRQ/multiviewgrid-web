@@ -1,6 +1,6 @@
-import React, { useState, useCallback, memo, lazy, Suspense, useMemo } from 'react'
-import { Card, IconButton, Typography, Box, CircularProgress } from '@mui/material'
-import { Close, VolumeOff, VolumeUp } from '@mui/icons-material'
+import React, { useState, useCallback, memo, lazy, Suspense, useMemo, useRef } from 'react'
+import { Button, Card, IconButton, Typography, Box, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Tooltip } from '@mui/material'
+import { Close, Edit, FitScreen, Fullscreen, VolumeOff, VolumeUp } from '@mui/icons-material'
 import type { DashboardStream } from '../../types/dashboard'
 import { useStreamStore } from '../../store/useStreamStore'
 import { YouTubeEmbed } from './YouTubeEmbed'
@@ -14,7 +14,7 @@ import { KickEmbed } from './KickEmbed'
 import { DailymotionEmbed } from './DailymotionEmbed'
 import { BrowserTile } from './BrowserTile'
 import { AutoRecoverWrapper } from './AutoRecoverWrapper'
-import { isBrowserStreamUrl } from '../../utils/browser'
+import { isBrowserCandidateUrl, isBrowserStreamUrl } from '../../utils/browser'
 import { isRumbleUrl } from '../../utils/rumble'
 import { isTwitterUrl } from '../../utils/twitter'
 import { isFacebookUrl } from '../../utils/facebook'
@@ -26,6 +26,7 @@ import { isDailymotionUrl } from '../../utils/dailymotion'
 
 // Lazy load ReactPlayer for better initial load time
 const ReactPlayer = lazy(() => import('react-player'))
+const BASE_CONFIG = { attributes: { crossOrigin: 'anonymous' } }
 
 const detectStreamType = (
   url: string
@@ -44,7 +45,9 @@ const detectStreamType = (
   | 'kick'
   | 'dailymotion'
   | 'local'
+  | 'desktop-only'
   | 'other' => {
+  if (/^(rtsp|rtsps|ndi|acestream|capture|screen|window):/i.test(url)) return 'desktop-only'
   if (isBrowserStreamUrl(url)) {
     return 'browser'
   }
@@ -78,6 +81,7 @@ const detectStreamType = (
   if (isVimeoUrl(url)) return 'vimeo'
   if (isKickUrl(url)) return 'kick'
   if (isDailymotionUrl(url)) return 'dailymotion'
+  if (isBrowserCandidateUrl(url)) return 'browser'
   return 'other'
 }
 
@@ -91,6 +95,10 @@ export const StreamCard: React.FC<StreamCardProps> = memo(({ stream, readOnly = 
   const updateStream = useStreamStore((s) => s.updateStream)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editName, setEditName] = useState(stream.name)
+  const [editUrl, setEditUrl] = useState(stream.streamUrl)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   const streamType = useMemo(() => detectStreamType(stream.streamUrl), [stream.streamUrl])
 
@@ -102,6 +110,26 @@ export const StreamCard: React.FC<StreamCardProps> = memo(({ stream, readOnly = 
     updateStream(stream.id, { muted: !stream.muted })
   }, [updateStream, stream.id, stream.muted])
 
+  const toggleFit = useCallback(() => {
+    updateStream(stream.id, { fitMode: stream.fitMode === 'cover' ? 'contain' : 'cover' })
+  }, [updateStream, stream.id, stream.fitMode])
+
+  const editStream = useCallback(() => {
+    setEditName(stream.name)
+    setEditUrl(stream.streamUrl)
+    setEditOpen(true)
+  }, [stream])
+
+  const saveEdit = useCallback(() => {
+    if (!editUrl.trim()) return
+    updateStream(stream.id, { name: editName.trim() || stream.name, streamUrl: editUrl.trim() })
+    setEditOpen(false)
+  }, [editName, editUrl, stream.id, stream.name, updateStream])
+
+  const openFullscreen = useCallback(() => {
+    void cardRef.current?.requestFullscreen()
+  }, [])
+
   const handleLoad = useCallback(() => {
     setLoading(false)
     setError(null)
@@ -111,11 +139,6 @@ export const StreamCard: React.FC<StreamCardProps> = memo(({ stream, readOnly = 
     setLoading(false)
     setError(err instanceof Error ? err.message : String(err))
   }, [])
-
-  // HLS/DASH config
-  const BASE_CONFIG = {
-    attributes: { crossOrigin: 'anonymous' }
-  }
 
   const streamConfig = useMemo(() => {
     if (streamType === 'hls') {
@@ -238,9 +261,13 @@ export const StreamCard: React.FC<StreamCardProps> = memo(({ stream, readOnly = 
       case 'browser':
         return <BrowserTile url={stream.streamUrl} onLoad={handleLoad} onError={handleError} />
       case 'local':
+      case 'desktop-only':
         return (
           <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#000' }}>
-            <Typography variant="body2" color="text.secondary">Local file</Typography>
+            <Box sx={{ textAlign: 'center', p: 2 }}>
+              <Typography variant="body2" color="text.secondary">Requires MultiViewGrid Desktop</Typography>
+              <Typography variant="caption" color="text.disabled">RTSP, NDI, AceStream, capture, and local files are desktop-only.</Typography>
+            </Box>
           </Box>
         )
       default:
@@ -259,8 +286,10 @@ export const StreamCard: React.FC<StreamCardProps> = memo(({ stream, readOnly = 
     }
   }
 
-  return (
+  return <>
     <Card
+      ref={cardRef}
+      onDoubleClick={openFullscreen}
       sx={{
         width: '100%',
         height: '100%',
@@ -275,6 +304,7 @@ export const StreamCard: React.FC<StreamCardProps> = memo(({ stream, readOnly = 
     >
       {/* Header bar */}
       <Box
+        className="drag-handle"
         sx={{
           display: 'flex',
           alignItems: 'center',
@@ -291,17 +321,20 @@ export const StreamCard: React.FC<StreamCardProps> = memo(({ stream, readOnly = 
           {stream.name || stream.streamUrl.slice(0, 40)}
         </Typography>
         {!readOnly && <Box sx={{ display: 'flex', gap: 0.25 }}>
-          <IconButton size="small" onClick={toggleMute} sx={{ width: 22, height: 22 }}>
+          <Tooltip title={stream.muted ? 'Unmute' : 'Mute'}><IconButton size="small" onClick={toggleMute} sx={{ width: 22, height: 22 }}>
             {stream.muted ? <VolumeOff sx={{ fontSize: 14 }} /> : <VolumeUp sx={{ fontSize: 14 }} />}
-          </IconButton>
-          <IconButton size="small" onClick={handleRemove} sx={{ width: 22, height: 22 }}>
+          </IconButton></Tooltip>
+          <Tooltip title={stream.fitMode === 'cover' ? 'Fit video' : 'Fill tile'}><IconButton size="small" onClick={toggleFit} sx={{ width: 22, height: 22 }}><FitScreen sx={{ fontSize: 14 }} /></IconButton></Tooltip>
+          <Tooltip title="Fullscreen"><IconButton size="small" onClick={openFullscreen} sx={{ width: 22, height: 22 }}><Fullscreen sx={{ fontSize: 14 }} /></IconButton></Tooltip>
+          <Tooltip title="Edit stream"><IconButton size="small" onClick={editStream} sx={{ width: 22, height: 22 }}><Edit sx={{ fontSize: 14 }} /></IconButton></Tooltip>
+          <Tooltip title="Remove"><IconButton size="small" onClick={handleRemove} sx={{ width: 22, height: 22 }}>
             <Close sx={{ fontSize: 14 }} />
-          </IconButton>
+          </IconButton></Tooltip>
         </Box>}
       </Box>
 
       {/* Content area */}
-      <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden', bgcolor: '#000' }}>
+      <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden', bgcolor: '#000', '& video': { objectFit: stream.fitMode === 'cover' ? 'cover' : 'contain' }, '& iframe': { transform: stream.fitMode === 'cover' ? 'scale(1.18)' : 'none', transformOrigin: 'center' } }}>
         {renderContent()}
         {loading && streamType !== 'browser' && (
           <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.5)', zIndex: 1 }}>
@@ -315,7 +348,15 @@ export const StreamCard: React.FC<StreamCardProps> = memo(({ stream, readOnly = 
         )}
       </Box>
     </Card>
-  )
+    <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth>
+      <DialogTitle>Edit Stream</DialogTitle>
+      <DialogContent sx={{ display: 'grid', gap: 2, pt: '16px !important' }}>
+        <TextField autoFocus label="Stream Name" value={editName} onChange={(event) => setEditName(event.target.value)} />
+        <TextField label="Stream URL" value={editUrl} onChange={(event) => setEditUrl(event.target.value)} onKeyDown={(event) => { if (event.key === 'Enter') saveEdit() }} />
+      </DialogContent>
+      <DialogActions><Button onClick={() => setEditOpen(false)}>Cancel</Button><Button variant="contained" disabled={!editUrl.trim()} onClick={saveEdit}>Save</Button></DialogActions>
+    </Dialog>
+  </>
 })
 
 StreamCard.displayName = 'StreamCard'
