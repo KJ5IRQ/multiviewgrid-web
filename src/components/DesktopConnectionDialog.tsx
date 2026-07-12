@@ -11,6 +11,7 @@ import {
   Typography
 } from '@mui/material'
 import { useDesktopConnectionStore } from '../store/useDesktopConnectionStore'
+import { useDesktopGridStore } from '../store/useDesktopGridStore'
 
 interface DesktopConnectionDialogProps {
   open: boolean
@@ -25,6 +26,8 @@ export const DesktopConnectionDialog: React.FC<DesktopConnectionDialogProps> = (
   const setConfig = useDesktopConnectionStore((s) => s.setConfig)
   const testConnection = useDesktopConnectionStore((s) => s.testConnection)
   const disconnect = useDesktopConnectionStore((s) => s.disconnect)
+  const refreshDesktopState = useDesktopGridStore((s) => s.refreshDesktopState)
+  const clearDesktopState = useDesktopGridStore((s) => s.clearDesktopState)
 
   const [baseUrl, setBaseUrl] = useState(savedBaseUrl)
   const [apiKey, setApiKey] = useState(savedApiKey)
@@ -42,15 +45,17 @@ export const DesktopConnectionDialog: React.FC<DesktopConnectionDialogProps> = (
     setConfig({ baseUrl, apiKey })
     setTesting(true)
     try {
-      await testConnection(controller.signal)
+      const result = await testConnection(controller.signal)
+      if (result.ok) await refreshDesktopState(controller.signal)
     } finally {
       setTesting(false)
     }
-  }, [apiKey, baseUrl, setConfig, testConnection])
+  }, [apiKey, baseUrl, setConfig, testConnection, refreshDesktopState])
 
   const handleDisconnect = useCallback(() => {
     disconnect()
-  }, [disconnect])
+    clearDesktopState()
+  }, [disconnect, clearDesktopState])
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { bgcolor: '#111', border: '1px solid rgba(255,255,255,0.1)' } }}>
@@ -67,7 +72,7 @@ export const DesktopConnectionDialog: React.FC<DesktopConnectionDialogProps> = (
           <TextField
             autoFocus
             label="Desktop API URL"
-            placeholder="http://localhost:8765"
+            placeholder="http://localhost:3737"
             value={baseUrl}
             onChange={(event) => setBaseUrl(event.target.value)}
             fullWidth
@@ -90,8 +95,7 @@ export const DesktopConnectionDialog: React.FC<DesktopConnectionDialogProps> = (
           )}
 
           <Alert severity="info">
-            This first companion-mode slice stores connection settings and verifies a desktop API endpoint.
-            Grid sync and remote commands can build on this connection layer next.
+            Connected mode syncs the desktop app's active grid and streams. Disconnect to return to the browser's standalone grid.
           </Alert>
         </Stack>
       </DialogContent>

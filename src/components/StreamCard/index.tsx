@@ -83,9 +83,10 @@ const detectStreamType = (
 
 interface StreamCardProps {
   stream: DashboardStream
+  readOnly?: boolean
 }
 
-export const StreamCard: React.FC<StreamCardProps> = memo(({ stream }) => {
+export const StreamCard: React.FC<StreamCardProps> = memo(({ stream, readOnly = false }) => {
   const removeStream = useStreamStore((s) => s.removeStream)
   const updateStream = useStreamStore((s) => s.updateStream)
   const [loading, setLoading] = useState(true)
@@ -289,14 +290,14 @@ export const StreamCard: React.FC<StreamCardProps> = memo(({ stream }) => {
         <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>
           {stream.name || stream.streamUrl.slice(0, 40)}
         </Typography>
-        <Box sx={{ display: 'flex', gap: 0.25 }}>
+        {!readOnly && <Box sx={{ display: 'flex', gap: 0.25 }}>
           <IconButton size="small" onClick={toggleMute} sx={{ width: 22, height: 22 }}>
             {stream.muted ? <VolumeOff sx={{ fontSize: 14 }} /> : <VolumeUp sx={{ fontSize: 14 }} />}
           </IconButton>
           <IconButton size="small" onClick={handleRemove} sx={{ width: 22, height: 22 }}>
             <Close sx={{ fontSize: 14 }} />
           </IconButton>
-        </Box>
+        </Box>}
       </Box>
 
       {/* Content area */}

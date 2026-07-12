@@ -1,12 +1,13 @@
 import React, { useState, useCallback } from 'react'
-import { Box, Typography, IconButton, Button, Tooltip } from '@mui/material'
-import { Add, Share, DeleteSweep, Link as LinkIcon, LinkOff } from '@mui/icons-material'
+import { Box, Typography, IconButton, Button, Tooltip, Select, MenuItem } from '@mui/material'
+import { Add, Share, DeleteSweep, Link as LinkIcon, LinkOff, Refresh } from '@mui/icons-material'
 import { useStreamStore } from '../store/useStreamStore'
 import { StreamGrid } from './StreamGrid'
 import { AddStreamDialog } from './AddStreamDialog'
 import { ShareDialog } from './ShareDialog'
 import { DesktopConnectionDialog } from './DesktopConnectionDialog'
 import { useDesktopConnectionStore } from '../store/useDesktopConnectionStore'
+import { useDesktopGridStore } from '../store/useDesktopGridStore'
 
 export const Layout: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -16,6 +17,15 @@ export const Layout: React.FC = () => {
   const clearAll = useStreamStore((s) => s.clearAll)
   const desktopConnected = useDesktopConnectionStore((s) => s.connected)
   const desktopBaseUrl = useDesktopConnectionStore((s) => s.baseUrl)
+  const desktopGrids = useDesktopGridStore((s) => s.desktopGrids)
+  const activeDesktopGridId = useDesktopGridStore((s) => s.activeDesktopGridId)
+  const activeDesktopGridName = useDesktopGridStore((s) => s.activeDesktopGridName)
+  const desktopStreams = useDesktopGridStore((s) => s.desktopStreams)
+  const isSyncing = useDesktopGridStore((s) => s.isSyncing)
+  const syncError = useDesktopGridStore((s) => s.syncError)
+  const refreshDesktopState = useDesktopGridStore((s) => s.refreshDesktopState)
+  const switchDesktopGrid = useDesktopGridStore((s) => s.switchDesktopGrid)
+  const visibleStreams = desktopConnected ? desktopStreams : streams
 
   const handleOpenAdd = useCallback(() => setIsAddDialogOpen(true), [])
   const handleCloseAdd = useCallback(() => setIsAddDialogOpen(false), [])
@@ -28,6 +38,12 @@ export const Layout: React.FC = () => {
       clearAll()
     }
   }, [streams.length, clearAll])
+  const handleRefreshDesktop = useCallback(() => {
+    void refreshDesktopState().catch(() => undefined)
+  }, [refreshDesktopState])
+  const handleSwitchDesktopGrid = useCallback((gridId: string) => {
+    void switchDesktopGrid(gridId).catch(() => undefined)
+  }, [switchDesktopGrid])
 
   return (
     <Box
@@ -66,12 +82,12 @@ export const Layout: React.FC = () => {
           >
             MultiviewGrid
           </Typography>
-          {streams.length > 0 && (
+          {visibleStreams.length > 0 && (
             <Typography
               variant="caption"
               sx={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}
             >
-              {streams.length} stream{streams.length !== 1 ? 's' : ''}
+              {visibleStreams.length} stream{visibleStreams.length !== 1 ? 's' : ''}
             </Typography>
           )}
         </Box>
@@ -100,7 +116,32 @@ export const Layout: React.FC = () => {
             </Button>
           </Tooltip>
 
-          <Tooltip title="Add Stream">
+          {desktopConnected && (
+            <>
+              <Select
+                size="small"
+                value={activeDesktopGridId ?? ''}
+                displayEmpty
+                disabled={isSyncing || desktopGrids.length === 0}
+                onChange={(event) => handleSwitchDesktopGrid(event.target.value)}
+                renderValue={(value) => activeDesktopGridName || desktopGrids.find((grid) => grid.id === value)?.name || 'Active grid'}
+                sx={{ minWidth: 150, height: 32, fontSize: 12 }}
+              >
+                {desktopGrids.map((grid) => (
+                  <MenuItem key={grid.id} value={grid.id}>{grid.name}</MenuItem>
+                ))}
+              </Select>
+              <Tooltip title={syncError ? `Sync failed: ${syncError}` : 'Refresh desktop state'}>
+                <span>
+                  <IconButton size="small" disabled={isSyncing} onClick={handleRefreshDesktop} color={syncError ? 'error' : 'default'}>
+                    <Refresh sx={{ fontSize: 19 }} />
+                  </IconButton>
+                </span>
+              </Tooltip>
+            </>
+          )}
+
+          {!desktopConnected && <Tooltip title="Add Stream">
             <Button
               variant="outlined"
               size="small"
@@ -119,9 +160,9 @@ export const Layout: React.FC = () => {
             >
               Add Stream
             </Button>
-          </Tooltip>
+          </Tooltip>}
 
-          {streams.length > 0 && (
+          {!desktopConnected && streams.length > 0 && (
             <>
               <Tooltip title="Share Grid">
                 <IconButton
@@ -154,7 +195,7 @@ export const Layout: React.FC = () => {
       </Box>
 
       {/* Grid area */}
-      <StreamGrid streams={streams} />
+      <StreamGrid streams={visibleStreams} readOnly={desktopConnected} />
 
       {/* Dialogs */}
       <AddStreamDialog open={isAddDialogOpen} onClose={handleCloseAdd} />
