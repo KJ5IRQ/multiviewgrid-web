@@ -101,7 +101,7 @@ export const Layout = () => {
             <Box component="img" src="/favicon.svg" alt="MultiviewGrid" sx={{ width: 28, height: 28 }} />
             <Typography sx={{ fontWeight: 700, fontSize: 17, letterSpacing: '-.02em', display: { xs: 'none', sm: 'block' } }}>MultiviewGrid</Typography>
           </Box>
-          <Box sx={{ width: 1, height: 20, bgcolor: 'rgba(255,255,255,.1)', flexShrink: 0 }} />
+          <Box sx={{ width: '1px', height: 20, bgcolor: 'rgba(255,255,255,.1)', flexShrink: 0 }} />
 
           {!desktopConnected ? <WebGridTabs onNewGrid={() => setNewGridOpen(true)} /> : (
             <Box sx={{ flex: 1, display: 'flex', gap: 1, alignItems: 'center' }}>
