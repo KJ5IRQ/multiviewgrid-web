@@ -1,21 +1,28 @@
 import React, { useState, useCallback } from 'react'
 import { Box, Typography, IconButton, Button, Tooltip } from '@mui/material'
-import { Add, Share, DeleteSweep } from '@mui/icons-material'
+import { Add, Share, DeleteSweep, Link as LinkIcon, LinkOff } from '@mui/icons-material'
 import { useStreamStore } from '../store/useStreamStore'
 import { StreamGrid } from './StreamGrid'
 import { AddStreamDialog } from './AddStreamDialog'
 import { ShareDialog } from './ShareDialog'
+import { DesktopConnectionDialog } from './DesktopConnectionDialog'
+import { useDesktopConnectionStore } from '../store/useDesktopConnectionStore'
 
 export const Layout: React.FC = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
+  const [isConnectionDialogOpen, setIsConnectionDialogOpen] = useState(false)
   const streams = useStreamStore((s) => s.streams)
   const clearAll = useStreamStore((s) => s.clearAll)
+  const desktopConnected = useDesktopConnectionStore((s) => s.connected)
+  const desktopBaseUrl = useDesktopConnectionStore((s) => s.baseUrl)
 
   const handleOpenAdd = useCallback(() => setIsAddDialogOpen(true), [])
   const handleCloseAdd = useCallback(() => setIsAddDialogOpen(false), [])
   const handleOpenShare = useCallback(() => setIsShareDialogOpen(true), [])
   const handleCloseShare = useCallback(() => setIsShareDialogOpen(false), [])
+  const handleOpenConnection = useCallback(() => setIsConnectionDialogOpen(true), [])
+  const handleCloseConnection = useCallback(() => setIsConnectionDialogOpen(false), [])
   const handleClearAll = useCallback(() => {
     if (streams.length > 0 && window.confirm('Clear all streams?')) {
       clearAll()
@@ -71,6 +78,28 @@ export const Layout: React.FC = () => {
 
         {/* Right: toolbar */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+          <Tooltip title={desktopConnected ? `Connected to ${desktopBaseUrl}` : 'Connect to MultiViewGrid Desktop'}>
+            <Button
+              variant={desktopConnected ? 'contained' : 'outlined'}
+              size="small"
+              startIcon={desktopConnected ? <LinkIcon /> : <LinkOff />}
+              onClick={handleOpenConnection}
+              sx={{
+                color: desktopConnected ? '#001b0e' : 'rgba(255,255,255,0.65)',
+                bgcolor: desktopConnected ? '#00ff88' : 'transparent',
+                borderColor: desktopConnected ? '#00ff88' : 'rgba(255,255,255,0.18)',
+                fontSize: 12,
+                fontWeight: 600,
+                '&:hover': {
+                  borderColor: '#00ff88',
+                  bgcolor: desktopConnected ? '#00dd77' : 'rgba(0,255,136,0.06)'
+                }
+              }}
+            >
+              {desktopConnected ? 'Desktop Connected' : 'Desktop'}
+            </Button>
+          </Tooltip>
+
           <Tooltip title="Add Stream">
             <Button
               variant="outlined"
@@ -130,6 +159,7 @@ export const Layout: React.FC = () => {
       {/* Dialogs */}
       <AddStreamDialog open={isAddDialogOpen} onClose={handleCloseAdd} />
       <ShareDialog open={isShareDialogOpen} onClose={handleCloseShare} />
+      <DesktopConnectionDialog open={isConnectionDialogOpen} onClose={handleCloseConnection} />
     </Box>
   )
 }
