@@ -19,9 +19,10 @@ const COLS = 24
 
 interface StreamGridProps {
   streams: DashboardStream[]
+  readOnly?: boolean
 }
 
-export const StreamGrid = React.memo(({ streams }: StreamGridProps): JSX.Element => {
+export const StreamGrid = React.memo(({ streams, readOnly = false }: StreamGridProps): JSX.Element => {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState({ width: 1200, rowHeight: 100 })
   const updateStream = useStreamStore((s) => s.updateStream)
@@ -62,6 +63,7 @@ export const StreamGrid = React.memo(({ streams }: StreamGridProps): JSX.Element
 
   const handleLayoutChange = useCallback(
     (newLayout: { i: string; x: number; y: number; w: number; h: number }[]) => {
+      if (readOnly) return
       for (const item of newLayout) {
         const stream = streams.find((s) => s.id === item.i)
         if (
@@ -72,7 +74,7 @@ export const StreamGrid = React.memo(({ streams }: StreamGridProps): JSX.Element
         }
       }
     },
-    [streams, updateStream]
+    [readOnly, streams, updateStream]
   )
 
   const margins = calculateMargins()
@@ -121,13 +123,14 @@ export const StreamGrid = React.memo(({ streams }: StreamGridProps): JSX.Element
         containerPadding={[0, 0]}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".drag-handle"
-        isResizable
+        isDraggable={!readOnly}
+        isResizable={!readOnly}
         compactType="vertical"
         useCSSTransforms
       >
         {streams.map((stream) => (
           <Box key={stream.id} sx={{ overflow: 'hidden' }}>
-            <StreamCard stream={stream} />
+            <StreamCard stream={stream} readOnly={readOnly} />
           </Box>
         ))}
       </GridLayout>

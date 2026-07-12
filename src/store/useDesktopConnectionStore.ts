@@ -20,7 +20,7 @@ interface DesktopConnectionStore {
 export const useDesktopConnectionStore = create<DesktopConnectionStore>()(
   persist(
     (set, get) => ({
-      baseUrl: 'http://localhost:8765',
+      baseUrl: 'http://localhost:3737',
       apiKey: '',
       connected: false,
       lastCheckedAt: null,
