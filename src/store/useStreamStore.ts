@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { DashboardLayout, DashboardStream } from '../types/dashboard'
+import type { DashboardLayout, DashboardStream } from '../types/dashboard'
 import { encodeLayout, getLayoutFromUrl } from '../utils/shareUrl'
 
 interface StreamStore {
