@@ -1,32 +1,76 @@
-# React + TypeScript + Vite
+# MultiviewGrid Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+MultiviewGrid Web is the browser companion for the desktop MultiviewGrid app. The
+current web app can also run in a limited standalone mode, but the preferred
+architecture is **companion mode**: keep desktop-only media features in the
+Electron app and use this web UI as a remote control surface.
 
-Currently, two official plugins are available:
+## Why companion mode?
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+A normal browser cannot fully replace the desktop app for features such as RTSP
+transcoding, local filesystem playback, capture tiles, or unrestricted embedded
+browser views. Those capabilities should stay in the desktop application, while
+this project provides a mobile- and browser-friendly way to configure and monitor
+it.
 
-## React Compiler
+## Current features
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React + TypeScript + Vite web UI.
+- Dark MultiviewGrid-style stream grid.
+- Add, remove, resize, and persist stream tiles locally.
+- Share local layouts through URL hashes.
+- First companion-mode connection settings dialog for a running desktop API.
+- Desktop API connection testing with optional `X-API-Key` authentication.
 
-## Expanding the Oxlint configuration
+## Companion connection
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+Use the **Desktop** button in the toolbar to configure the running desktop app's
+API URL and API key. The web app tries common health/status endpoints and stores
+connection settings in local browser storage.
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Default URL:
+
+```text
+http://localhost:8765
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+When using a phone or another computer on the same LAN, replace `localhost` with
+the desktop machine's LAN IP address.
+
+## Standalone web limitations
+
+Standalone browser mode is intentionally limited. In a browser-only deployment:
+
+- RTSP/RTSPS sources need a desktop app or server to transcode them to browser-playable HLS/DASH.
+- `file://` paths from another machine cannot be opened by the website.
+- Many arbitrary websites block iframe embedding with security headers.
+- Capture tiles require explicit browser permissions and are not equivalent to native capture.
+
+## Development
+
+Install dependencies and start the dev server:
+
+```bash
+npm install
+npm run dev
+```
+
+Build for production:
+
+```bash
+npm run build
+```
+
+Run the linter:
+
+```bash
+npm run lint
+```
+
+## Near-term roadmap
+
+1. Add a typed desktop API client for grids and streams.
+2. Sync grids from the running desktop app.
+3. Send remote commands for add, update, remove, mute, and auto-arrange.
+4. Add connection health/status indicators.
+5. Keep standalone mode focused on browser-compatible sources only.
