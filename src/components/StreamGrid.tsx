@@ -14,7 +14,6 @@ const calculateMargins = (): { horizontal: number; vertical: number } => {
   return { horizontal: horizontalMargin, vertical: verticalMargin }
 }
 
-const ASPECT_RATIO = 16 / 9
 const COLS = 24
 
 interface StreamGridProps {
@@ -30,11 +29,11 @@ export const StreamGrid = React.memo(({ streams, readOnly = false }: StreamGridP
   const updateDimensions = useCallback((): void => {
     if (containerRef.current) {
       const containerWidth = containerRef.current.offsetWidth
+      const containerHeight = containerRef.current.offsetHeight
       const newWidth = Math.max(Math.floor(containerWidth), 480)
       const margins = calculateMargins()
-      const columnWidth = (newWidth - margins.horizontal * (COLS + 1)) / COLS
-      const naturalRowHeight = Math.max(columnWidth / ASPECT_RATIO, 1)
-      const rowHeight = Math.max(Math.floor(naturalRowHeight), 50)
+      const availableHeight = Math.max(containerHeight - margins.vertical * (COLS - 1), COLS)
+      const rowHeight = Math.max(Math.floor(availableHeight / COLS), 1)
       setDimensions({ width: newWidth, rowHeight })
     }
   }, [])
@@ -43,7 +42,12 @@ export const StreamGrid = React.memo(({ streams, readOnly = false }: StreamGridP
     updateDimensions()
     const handleResize = (): void => updateDimensions()
     window.addEventListener('resize', handleResize)
-    return (): void => window.removeEventListener('resize', handleResize)
+    const observer = new ResizeObserver(handleResize)
+    if (containerRef.current) observer.observe(containerRef.current)
+    return (): void => {
+      window.removeEventListener('resize', handleResize)
+      observer.disconnect()
+    }
   }, [updateDimensions])
 
   // Build the layout array for react-grid-layout from stream positions
