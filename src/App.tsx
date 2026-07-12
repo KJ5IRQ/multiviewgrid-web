@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
+import { ThemeProvider, createTheme, CssBaseline, alpha } from '@mui/material'
 import { useStreamStore } from './store/useStreamStore'
 import { Layout } from './components/Layout'
 import './styles/global.css'
@@ -7,16 +7,29 @@ import './styles/global.css'
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
-    primary: { main: '#00ff88' },
-    background: { default: '#0a0a0a', paper: '#111' },
-    text: { primary: '#e0e0e0', secondary: 'rgba(255,255,255,0.5)' }
+    primary: { main: '#3FB950', light: '#56D364', dark: '#2EA043', contrastText: '#06120A' },
+    background: { default: '#0A0C10', paper: '#12161C' },
+    divider: 'rgba(240,246,252,0.09)',
+    text: { primary: '#E6EDF3', secondary: '#9AA7B4', disabled: 'rgba(230,237,243,.4)' }
+  },
+  shape: { borderRadius: 8 },
+  typography: {
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    button: { fontWeight: 600, textTransform: 'none' }
   },
   components: {
     MuiCssBaseline: {
       styleOverrides: {
-        body: { backgroundColor: '#0a0a0a' }
+        body: { backgroundColor: '#0A0C10' },
+        '::selection': { backgroundColor: '#3FB950', color: '#06120A' }
       }
-    }
+    },
+    MuiPaper: { styleOverrides: { root: { backgroundImage: 'none' } } },
+    MuiDialog: { styleOverrides: { paper: { border: '1px solid rgba(240,246,252,.16)', borderRadius: 12, boxShadow: '0 24px 60px -20px rgba(0,0,0,.8)' } } },
+    MuiButton: { defaultProps: { disableElevation: true }, styleOverrides: { root: { textTransform: 'none', borderRadius: 8 }, containedPrimary: { color: '#06120A' }, outlined: { borderColor: 'rgba(240,246,252,.16)', backgroundColor: 'rgba(255,255,255,.06)', '&:hover': { borderColor: alpha('#3FB950', .6), backgroundColor: alpha('#3FB950', .14) } } } },
+    MuiMenu: { styleOverrides: { paper: { border: '1px solid rgba(240,246,252,.16)', borderRadius: 10 }, list: { padding: 5 } } },
+    MuiMenuItem: { styleOverrides: { root: { borderRadius: 6, minHeight: 38 } } },
+    MuiTooltip: { defaultProps: { arrow: true, enterDelay: 400 } }
   }
 })
 
@@ -50,7 +63,7 @@ export default function App() {
   if (!hydrated) {
     return (
       <div style={{
-        background: '#0a0a0a',
+        background: '#0A0C10',
         color: '#fff',
         minHeight: '100vh',
         display: 'flex',

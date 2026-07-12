@@ -27,6 +27,7 @@ export interface DashboardStream {
   w: number
   h: number
   logoUrl?: string
+  fitMode?: 'contain' | 'cover'
 }
 
 export interface DashboardLayout {

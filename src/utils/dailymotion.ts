@@ -2,12 +2,13 @@
  * Dailymotion video embed utilities.
  */
 
-const DAILYMOTION_ID_PATTERN = /dailymotion\.com\/(?:video|embed\/video)\/([a-zA-Z0-9]+)/i
+const DAILYMOTION_ID_PATTERN = /(?:dailymotion\.com\/(?:video|embed\/video)\/|dai\.ly\/)([a-zA-Z0-9]+)/i
 
 export function isDailymotionUrl(url: string): boolean {
   try {
     const parsed = new URL(url)
-    return parsed.hostname.toLowerCase().includes('dailymotion.com')
+    const hostname = parsed.hostname.toLowerCase()
+    return hostname.includes('dailymotion.com') || hostname === 'dai.ly'
   } catch {
     return false
   }

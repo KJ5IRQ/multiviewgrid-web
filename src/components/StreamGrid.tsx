@@ -28,9 +28,12 @@ export const StreamGrid = React.memo(({ streams, readOnly = false }: StreamGridP
 
   const updateDimensions = useCallback((): void => {
     if (containerRef.current) {
-      const containerWidth = containerRef.current.offsetWidth
-      const containerHeight = containerRef.current.offsetHeight
-      const newWidth = Math.max(Math.floor(containerWidth), 480)
+      const style = window.getComputedStyle(containerRef.current)
+      const horizontalPadding = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight)
+      const verticalPadding = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom)
+      const containerWidth = containerRef.current.clientWidth - horizontalPadding
+      const containerHeight = containerRef.current.clientHeight - verticalPadding
+      const newWidth = Math.max(Math.floor(containerWidth), 320)
       const margins = calculateMargins()
       const availableHeight = Math.max(containerHeight - margins.vertical * (COLS - 1), COLS)
       const rowHeight = Math.max(Math.floor(availableHeight / COLS), 1)
@@ -89,6 +92,8 @@ export const StreamGrid = React.memo(({ streams, readOnly = false }: StreamGridP
         ref={containerRef}
         sx={{
           flex: 1,
+          width: '100%',
+          height: '100%',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -112,6 +117,8 @@ export const StreamGrid = React.memo(({ streams, readOnly = false }: StreamGridP
       ref={containerRef}
       sx={{
         flex: 1,
+        width: '100%',
+        height: '100%',
         overflow: 'auto',
         px: 2,
         py: 1
@@ -127,6 +134,7 @@ export const StreamGrid = React.memo(({ streams, readOnly = false }: StreamGridP
         containerPadding={[0, 0]}
         onLayoutChange={handleLayoutChange}
         draggableHandle=".drag-handle"
+        draggableCancel="button,input,textarea,.MuiIconButton-root"
         isDraggable={!readOnly}
         isResizable={!readOnly}
         compactType="vertical"

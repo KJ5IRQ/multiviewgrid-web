@@ -32,6 +32,14 @@ export function resolveKnownRumbleEmbedUrl(url: string): string | null {
     return normalized
   }
 
+  // Public Rumble page URLs begin with the same video key used by the embed
+  // player (for example /v58gtiq-title.html -> /embed/v58gtiq/). Deriving it
+  // locally avoids browser-blocked cross-origin HTML scraping.
+  const pageKey = parsed.pathname.match(/^\/(v[a-z0-9]+)(?:-|\.html|\/|$)/i)?.[1]
+  if (pageKey) {
+    return `https://rumble.com/embed/${pageKey}/`
+  }
+
   return null
 }
 
