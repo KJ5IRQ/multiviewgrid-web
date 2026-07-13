@@ -25,7 +25,13 @@ import { isKickUrl } from '../../utils/kick'
 import { isDailymotionUrl } from '../../utils/dailymotion'
 
 // Lazy load ReactPlayer for better initial load time
-const ReactPlayer = lazy(() => import('react-player'))
+// Vite wraps react-player's CommonJS default export during development.
+// Normalize both the dev and production module shapes before React.lazy sees it.
+const ReactPlayer = lazy(async () => {
+  const module = await import('react-player')
+  const wrappedDefault = module.default as unknown as { default?: typeof module.default }
+  return { default: wrappedDefault.default ?? module.default }
+})
 const BASE_CONFIG = { attributes: { crossOrigin: 'anonymous' } }
 
 const detectStreamType = (

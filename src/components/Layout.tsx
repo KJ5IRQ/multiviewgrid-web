@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   Add, DeleteSweep, GridView, Link as LinkIcon, LinkOff, MoreVert,
-  Fullscreen, Refresh, Settings, Share, Tune, VolumeOff, VolumeUp
+  Fullscreen, HelpOutline, Refresh, Settings, Share, Tune, VolumeOff, VolumeUp
 } from '@mui/icons-material'
 import {
   AppBar, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle,
@@ -16,6 +16,10 @@ import { ShareDialog } from './ShareDialog'
 import { StreamGrid } from './StreamGrid'
 import { WebGridTabs } from './WebGridTabs'
 import { WebGridQuickSwitcher } from './WebGridQuickSwitcher'
+import { HowItWorksDialog } from './HowItWorksDialog'
+import { WelcomeDialog } from './WelcomeDialog'
+
+const WELCOME_DISMISSED_KEY = 'multiviewgrid-welcome-dismissed-v1'
 
 const glassButton = {
   width: 34, height: 34, borderRadius: '10px', color: 'rgba(255,255,255,.65)',
@@ -29,6 +33,9 @@ export const Layout = () => {
   const [newGridOpen, setNewGridOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [quickSwitcherOpen, setQuickSwitcherOpen] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
+  const [welcomeOpen, setWelcomeOpen] = useState(() => localStorage.getItem(WELCOME_DISMISSED_KEY) !== 'true')
+  const [dontShowWelcomeAgain, setDontShowWelcomeAgain] = useState(false)
   const [newGridName, setNewGridName] = useState('')
   const [layoutMenu, setLayoutMenu] = useState<HTMLElement | null>(null)
   const [moreMenu, setMoreMenu] = useState<HTMLElement | null>(null)
@@ -67,6 +74,11 @@ export const Layout = () => {
     setNewGridName('')
     setNewGridOpen(false)
   }
+
+  const closeWelcome = useCallback(() => {
+    if (dontShowWelcomeAgain) localStorage.setItem(WELCOME_DISMISSED_KEY, 'true')
+    setWelcomeOpen(false)
+  }, [dontShowWelcomeAgain])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -115,16 +127,17 @@ export const Layout = () => {
 
           {!desktopConnected && (
             <>
-              <Box role="button" onClick={toggleGlobalMute} sx={{ display: 'flex', alignItems: 'center', gap: 1, height: 34, px: 1.5, borderRadius: '10px', cursor: 'pointer', flexShrink: 0, color: globalMuted ? '#ff7b91' : 'text.secondary', bgcolor: globalMuted ? 'rgba(255,107,129,.12)' : 'rgba(255,255,255,.055)', '&:hover': { bgcolor: globalMuted ? 'rgba(255,107,129,.18)' : 'rgba(255,255,255,.1)' } }}>
+              <Box role="button" tabIndex={0} aria-label={globalMuted ? 'Unmute all streams' : 'Mute all streams'} onClick={toggleGlobalMute} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') toggleGlobalMute() }} sx={{ display: 'flex', alignItems: 'center', gap: 1, height: 34, px: 1.5, borderRadius: '10px', cursor: 'pointer', flexShrink: 0, color: globalMuted ? '#ff7b91' : 'text.secondary', bgcolor: globalMuted ? 'rgba(255,107,129,.12)' : 'rgba(255,255,255,.055)', '&:hover': { bgcolor: globalMuted ? 'rgba(255,107,129,.18)' : 'rgba(255,255,255,.1)' } }}>
                 {globalMuted ? <VolumeOff sx={{ fontSize: 18 }} /> : <VolumeUp sx={{ fontSize: 18 }} />}
                 <Typography sx={{ fontSize: 13, fontWeight: 600, display: { xs: 'none', lg: 'block' } }}>{globalMuted ? 'Unmute' : 'Mute all'}</Typography>
               </Box>
-              <Tooltip title="Auto-arrange tiles"><span><IconButton disabled={!streams.length} onClick={() => autoArrange('auto')} sx={glassButton}><GridView sx={{ fontSize: 17 }} /></IconButton></span></Tooltip>
-              <Tooltip title="Layout presets"><span><IconButton disabled={!streams.length} onClick={(event) => setLayoutMenu(event.currentTarget)} sx={glassButton}><Tune sx={{ fontSize: 17 }} /></IconButton></span></Tooltip>
+              <Tooltip title="Auto-arrange tiles"><span><IconButton aria-label="Auto-arrange tiles" disabled={!streams.length} onClick={() => autoArrange('auto')} sx={glassButton}><GridView sx={{ fontSize: 17 }} /></IconButton></span></Tooltip>
+              <Tooltip title="Layout presets"><span><IconButton aria-label="Layout presets" disabled={!streams.length} onClick={(event) => setLayoutMenu(event.currentTarget)} sx={glassButton}><Tune sx={{ fontSize: 17 }} /></IconButton></span></Tooltip>
               <Tooltip title="Web settings"><IconButton onClick={() => setSettingsOpen(true)} sx={glassButton}><Settings sx={{ fontSize: 17 }} /></IconButton></Tooltip>
             </>
           )}
 
+          <Tooltip title="How It Works"><IconButton aria-label="How It Works" onClick={() => setGuideOpen(true)} sx={glassButton}><HelpOutline sx={{ fontSize: 18 }} /></IconButton></Tooltip>
           <Button variant="contained" startIcon={<Add />} onClick={() => setAddOpen(true)} disabled={desktopConnected} sx={{ flexShrink: 0, bgcolor: '#00e982', color: '#04130b', fontWeight: 700, '&:hover': { bgcolor: '#24f49a' } }}>Add Stream</Button>
           <Tooltip title={desktopConnected ? 'Desktop connection' : 'More'}><IconButton onClick={(event) => desktopConnected ? setDesktopOpen(true) : setMoreMenu(event.currentTarget)} sx={glassButton}>{desktopConnected ? <LinkIcon sx={{ fontSize: 17 }} /> : <MoreVert sx={{ fontSize: 18 }} />}</IconButton></Tooltip>
         </Toolbar>
@@ -169,6 +182,15 @@ export const Layout = () => {
       <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} />
       <DesktopConnectionDialog open={desktopOpen} onClose={() => setDesktopOpen(false)} />
       <WebGridQuickSwitcher open={quickSwitcherOpen} onClose={() => setQuickSwitcherOpen(false)} onNewGrid={() => setNewGridOpen(true)} />
+      <HowItWorksDialog open={guideOpen} onClose={() => setGuideOpen(false)} onConnectDesktop={() => { setGuideOpen(false); setDesktopOpen(true) }} />
+      <WelcomeDialog
+        open={welcomeOpen}
+        dontShowAgain={dontShowWelcomeAgain}
+        onDontShowAgainChange={setDontShowWelcomeAgain}
+        onClose={closeWelcome}
+        onOpenGuide={() => { closeWelcome(); setGuideOpen(true) }}
+        onAddStream={() => { closeWelcome(); setAddOpen(true) }}
+      />
     </Box>
   )
 }
