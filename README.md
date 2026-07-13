@@ -65,6 +65,9 @@ npm run lint
 The production site is deployed at
 [multiviewgrid-web.vercel.app](https://multiviewgrid-web.vercel.app).
 
+See the [complete user guide](docs/USER_GUIDE.md) or select the **?** button in
+the web toolbar for the in-app version.
+
 ## Product direction
 
 1. Keep standalone browser parity with the desktop workflow as the first priority.
